@@ -10,13 +10,26 @@ class AlgoritmosNReinas:
         self.n = n
 
     def contar_ataques(self, estado):
+        colisiones = 0
+        cant_diagonal = (2 * self.n) - 1
 
-        ataques = 0
-        for i in range(self.n):
-            for j in range(i + 1, self.n):
-                if estado[i] == estado[j] or abs(estado[i] - estado[j]) == abs(i - j):
-                    ataques += 1
-        return ataques
+        F = [0] * self.n
+        P = [0] * cant_diagonal
+        S = [0] * cant_diagonal
+
+        for col in range(self.n):
+            fila = estado[col]
+            indice_p = fila - col + (self.n - 1)
+            indice_s = fila + col
+
+            colisiones += F[fila]
+            colisiones += P[indice_p]
+            colisiones += S[indice_s]
+
+            F[fila] += 1
+            P[indice_p] += 1
+            S[indice_s] += 1
+        return colisiones
 
     def generar_vecinos(self, estado):
 
