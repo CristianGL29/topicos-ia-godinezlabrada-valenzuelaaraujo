@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+import random
 
 
 class AlgoritmosNReinas:
@@ -198,6 +199,60 @@ class AlgoritmosNReinas:
 
             frontera.sort(key=lambda x: x[0])
 
+    def tabu(self, max_iteracion=1000, num_tabu=10):
+        sol_actual = list(range(self.n))
+        random.shuffle(sol_actual)
+        sol_mejor = tuple(sol_actual)
+
+        costo_mejor = self.contar_ataques(sol_mejor)
+
+        lista_tabu= []
+
+        for i in range(self.n):
+            fila = []
+            for j in range(self.n):
+                fila.append(0)
+            lista_tabu.append(fila)
+
+        iteracion = 0
+
+        while costo_mejor > 0 and iteracion < max_iteracion:
+            yield tuple(sol_actual), False
+            mejor_costo_vecino = float('inf')
+            mejor_vecino = None
+            mejor_movimiento = None
+
+            for i in range(self.n-1):
+                for j in range(i+1, self.n):
+                    vecino_temp = list(sol_actual)
+                    vecino_temp[i], vecino_temp[j] = vecino_temp[j], vecino_temp[i]
+                    costo_vecino = self.contar_ataques(tuple(vecino_temp))
+
+                    booleano_tabu = lista_tabu[i][j] > iteracion
+                    criterio_aspiracion = costo_vecino < costo_mejor
+
+                    if not booleano_tabu or criterio_aspiracion:
+                        if costo_vecino < mejor_costo_vecino:
+                            mejor_costo_vecino = costo_vecino
+                            mejor_vecino = vecino_temp
+                            mejor_movimiento = (i, j)
+            if mejor_vecino is None:
+                break
+
+            sol_actual = mejor_vecino
+            i_mov, j_mov = mejor_movimiento
+            lista_tabu[i_mov][j_mov] = iteracion + num_tabu
+            lista_tabu[j_mov][i_mov] = iteracion + num_tabu
+
+            if mejor_costo_vecino < costo_mejor:
+                sol_mejor = tuple(sol_actual)
+                costo_mejor = mejor_costo_vecino
+                if costo_mejor == 0:
+                    yield sol_mejor, True
+                    return sol_mejor
+            iteracion += 1
+        yield sol_mejor, costo_mejor == 0
+
 
 class InterfazGraficaNReinas:
 
@@ -225,7 +280,7 @@ class InterfazGraficaNReinas:
         tk.Spinbox(panel_control, from_=4, to=8, textvariable=self.n_var, width=10).pack(anchor="w", pady=(0, 15))
 
         tk.Label(panel_control, text="Algoritmo:", bg="#f0f0f0").pack(anchor="w", pady=(0, 5))
-        algoritmos = ["BFS", "DFS", "LDFS/ILDFS", "Voraz", "A Star"]
+        algoritmos = ["BFS", "DFS", "LDFS/ILDFS", "Voraz", "A Star", "Tabú"]
         combo_algo = ttk.Combobox(panel_control, textvariable=self.algo_var, values=algoritmos, state="readonly",
                                   width=15)
         combo_algo.pack(anchor="w", pady=(0, 15))
@@ -295,6 +350,8 @@ class InterfazGraficaNReinas:
             self.generador_algoritmo = motor.voraz()
         elif algoritmo == "A Star":
             self.generador_algoritmo = motor.a_star()
+        elif algoritmo == "Tabú":
+            self.generador_algoritmo = motor.tabu(max_iteracion=1000, num_tabu=10)
 
         self.lbl_estado.config(text=f"Buscando con {algoritmo}...")
         self.ejecutar_paso()
