@@ -1,13 +1,19 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 import random
-
+import time 
 
 class AlgoritmosNReinas:
   
 
     def __init__(self, n):
         self.n = n
+        self.generador_algoritmo = None
+        self.corriendo = False
+        self.movimientos = 0
+        self.tiempo_algoritmo = 0.0
+        self.algoritmo_actual = ""
+        self.n_actual = 0
 
     def contar_ataques(self, estado):
         colisiones = 0
@@ -352,6 +358,12 @@ class InterfazGraficaNReinas:
         n = self.n_var.get()
         algoritmo = self.algo_var.get()
         motor = AlgoritmosNReinas(n)
+        #para las metricas 
+        self.movimientos = 0
+        self.tiempo_algoritmo = 0.0
+        self.algoritmo_actual = algoritmo
+        self.n_actual = n
+
 
         if algoritmo == "BFS":
             self.generador_algoritmo = motor.bfs()
@@ -372,29 +384,50 @@ class InterfazGraficaNReinas:
     def ejecutar_paso(self):
         if not self.corriendo:
             return
+
+        inicio = time.perf_counter()
         try:
             estado, es_solucion = next(self.generador_algoritmo)
+            self.tiempo_algoritmo += time.perf_counter() - inicio
+
+            if not es_solucion:
+                self.movimientos += 1
+
             self.dibujar_estado(estado)
 
             if es_solucion:
                 self.lbl_estado.config(text="¡Solución Encontrada!", fg="green")
+                self.mostrar_metricas("Solución encontrada")
                 self.finalizar()
                 messagebox.showinfo("Éxito", "¡Se ha encontrado una solución!")
             else:
                 self.root.after(self.velocidad_var.get(), self.ejecutar_paso)
 
         except StopIteration:
+            self.tiempo_algoritmo += time.perf_counter() - inicio
             self.lbl_estado.config(text="Sin solución", fg="red")
+            self.mostrar_metricas("Sin solución")
             self.finalizar()
-            messagebox.showwarning("Fin",
-                                   "Se exploró el árbol y no se encontró solución o se atascó en un bucle local.")
+            messagebox.showwarning("Fin","Se exploró el árbol y no se encontró solución o se atascó en un bucle local.")
+
+    def mostrar_metricas(self, resultado):
+        print("=" * 40)
+        print(f"Algoritmo: {self.algoritmo_actual}")
+        print(f"N: {self.n_actual}")
+        print(f"Resultado: {resultado}")
+        print(f"Movimientos (estados explorados): {self.movimientos}")
+        print(f"Tiempo de ejecución: {self.tiempo_algoritmo:.4f} segundos")
+        print("=" * 40)
 
     def detener_simulacion(self):
+        if self.corriendo:
+            self.mostrar_metricas("Detenido")
         self.corriendo = False
         self.finalizar()
         self.lbl_estado.config(text="Detenido", fg="black")
 
     def finalizar(self):
+        self.corriendo = False
         self.btn_iniciar.config(state=tk.NORMAL)
         self.btn_detener.config(state=tk.DISABLED)
 
