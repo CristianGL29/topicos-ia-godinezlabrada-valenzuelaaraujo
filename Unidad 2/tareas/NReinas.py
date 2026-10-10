@@ -340,8 +340,8 @@ class InterfazGraficaNReinas:
         for col, fila in enumerate(estado):
             x = (col * tam_celda) + (tam_celda / 2)
             y = (fila * tam_celda) + (tam_celda / 2)
-            font_size = int(tam_celda * 0.6)
-            self.canvas.create_text(x, y, text="♛", font=("Arial", font_size), fill="black")
+            font_size = int(tam_celda * 0.1)
+            self.canvas.create_text(x, y, text="Reina", font=("Arial", font_size), fill="black")
 
     def iniciar_simulacion(self):
         self.detener_simulacion()
